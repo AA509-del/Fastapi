@@ -1,6 +1,6 @@
-# 旅游助手 API（LangGraph + FastAPI）
+# FastAPI + LangGraph 聊天接口示例（含旅游工具）
 
-异步 AI 旅游助手：提供非流式 `/chat` 与流式 `/chat/stream`，使用 LangGraph + 智谱 GLM。SQLite 保存会话 checkpoint，PostgreSQL 保存聊天历史，Redis 缓存回答。
+本项目使用 FastAPI、LangGraph 和智谱 GLM 实现聊天接口。Agent 提供天气查询、北京和深圳的示例景点推荐，以及按天计算预算三个旅游相关工具。`/chat` 返回 JSON 并使用 Redis 缓存回答；`/chat/stream` 通过 SSE 返回模型节点的消息。SQLite 保存会话 checkpoint；调用 `/chat/save_message` 时，聊天记录会写入 PostgreSQL。
 
 ## 接口文档（本地）
 
@@ -31,7 +31,7 @@
 | `REDIS_URL` | Redis 连接地址 |
 | `PORT` | 文档默认端口说明用；实际以启动命令为准 |
 
-配置由 `app/config.py`（pydantic-settings）加载，**请勿将 `.env` 提交到 Git**。
+应用设置由 `app/config.py`（pydantic-settings）加载；`REDIS_URL` 由 `app/cache.py` 读取。**请勿将 `.env` 提交到 Git**。
 
 ## Docker Compose 启动
 
@@ -58,11 +58,12 @@ uvicorn app.main:app --reload
 uvicorn app.main:app --reload --port 8001
 ```
 
-## 健康检查与聊天
+## 接口
 
 - `GET /health` → `{"status":"OK"}`
-- `POST /chat` → JSON：`message`、`session_id`
-- `POST /chat/stream` → SSE（`text/event-stream`）
+- `POST /chat` → 接收 `message` 和 `session_id`，返回 JSON；按会话与问题使用 Redis 缓存
+- `POST /chat/stream` → 接收相同字段，以 SSE（`text/event-stream`）返回模型节点消息，不是逐 token 输出
+- `POST /chat/save_message` → 调用 Agent，并将用户消息和回复写入 PostgreSQL
 
 ## 项目结构
 
@@ -76,9 +77,9 @@ uvicorn app.main:app --reload --port 8001
 │   ├── crud.py              # 聊天历史操作
 │   ├── cache.py             # Redis 缓存
 │   ├── routers/
-│   │   └── chat.py          # /chat、/chat/stream
+│   │   └── chat.py          # 聊天、流式响应和历史记录接口
 │   └── services/
-│       └── agent.py         # LangGraph Agent
+│       └── agent.py         # LangGraph Agent 与旅游示例工具
 ├── alembic/                 # 数据库迁移
 ├── .env                     # 本地密钥（不提交）
 ├── .env.example

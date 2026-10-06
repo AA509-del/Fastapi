@@ -37,10 +37,10 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 app = FastAPI(
-    title="旅游助手API（langgraph）",
+    title="FastAPI + LangGraph 聊天接口示例",
     version="1.0.0",
     lifespan=lifespan,
-    description="异步AI旅游助手接口文档"
+    description="基于智谱 GLM 的聊天接口，包含天气、示例景点推荐和预算计算工具"
 )
 
 @app.middleware("http")
