@@ -1,0 +1,27 @@
+# 与 Dockerfile 配套：减小构建上下文、避免把本机环境打进镜像
+.git
+.gitignore
+.idea
+.vscode
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+.mypy_cache
+.venv
+venv
+env
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+.env
+.env.*
+*.md
+
+# 运行单容器时一般不需要把 compose 文件打进镜像；且可避免 Windows 下该文件触发构建上下文打包异常
+docker-compose.yml
+docker-compose.yaml
+docker-compose.*.yml

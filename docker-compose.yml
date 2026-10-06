@@ -1,0 +1,48 @@
+services:
+  api:
+    build: .
+    ports:
+      # 左边是宿主机端口。8001 若已被本机 uvicorn 占用，不要用 8001，可改为 8003、8004 等
+      - "8002:8000"
+    environment:
+      - ZHIPUAI_API_KEY=${ZHIPUAI_API_KEY:-${ZHIPU_API_KEY:-}}
+      - SENIVERSE_API_KEY=${SENIVERSE_API_KEY:-${SENIVERSE_KEY:-}}
+      # 容器内连数据库：用异步驱动 asyncpg + 服务名 db（勿用 localhost）
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/agentdb
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app   # 开发热重载
+
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: agentdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine            # 轻量版 Redis，够用
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
